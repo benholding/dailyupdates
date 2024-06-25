@@ -1,1 +1,1 @@
-# dailyupdates
+This script finds the latest data science articles in the world of video games and sends me an email# dailyupdates
