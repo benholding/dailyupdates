@@ -1,3 +1,4 @@
 .env
 .venv/
 sent_articles.txt
+logs/
