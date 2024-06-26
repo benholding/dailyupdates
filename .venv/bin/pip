@@ -1,4 +1,4 @@
-#!/Users/ben/Documents/coding/daily_ds_updates/.venv/bin/python3.12
+#!/home/benholding/repos/ds_daily_updates/dailyupdates/.venv/bin/python3
 # -*- coding: utf-8 -*-
 import re
 import sys

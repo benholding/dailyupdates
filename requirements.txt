@@ -1,6 +1,6 @@
+wheel
 requests
 bs4
 datetime
 kaggle
-logging
 python-dotenv

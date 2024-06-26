@@ -53,6 +53,7 @@ def fetch_google_scholar_updates(queries, days_ago=7):
                     pub_info = entry.find('div', class_='gs_a').text
                     pub_date = None
                     pub_date_str = None
+                    full_paper_link = None
 
                     date_tag = entry.find('span', class_='gs_age') or entry.find('div', class_='gs_rs')
                     if date_tag:
@@ -70,7 +71,16 @@ def fetch_google_scholar_updates(queries, days_ago=7):
                         if pub_date and start_date <= pub_date <= today:
                             pub_date_str = pub_date.strftime('%Y-%m-%d')
                             if link not in sent_articles:
-                                updates[query].append({'title': title, 'link': link, 'date': pub_date_str})
+                                # Check for full paper link
+                                full_paper_link_tag = entry.find('div', class_='gs_or_ggsm')
+                                if full_paper_link_tag and full_paper_link_tag.a:
+                                    full_paper_link = full_paper_link_tag.a['href']
+                                updates[query].append({
+                                    'title': title, 
+                                    'link': link, 
+                                    'date': pub_date_str,
+                                    'full_paper_link': full_paper_link
+                                })
                                 logging.info(f"Added update: {title} ({pub_date_str}): {link}")
 
             logging.info(f'Fetched {len(updates[query])} updates from Google Scholar for query: {query}')
@@ -112,8 +122,12 @@ def compose_email_body(google_updates, kaggle_updates):
     body = "<html><body>"
     for query, articles in google_updates.items():
         if articles:
-            body += f"<b>Google Scholar Updates for '{query}':</b><br>" + "<br>".join([f"{u['title']} ({u['date']}): <a href='{u['link']}'>{u['link']}</a>" for u in articles]) + "<br><br>"
-
+            body += f"<b>Google Scholar Updates for '{query}':</b><br>"
+            for u in articles:
+                full_paper_info = f" [Full paper available here]({u['full_paper_link']})" if u['full_paper_link'] else ""
+                body += f"{u['title']} ({u['date']}): <a href='{u['link']}'>{u['link']}</a>{full_paper_info}<br>"
+            body += "<br>"
+    
     body += "<b>Kaggle Updates:</b><br>" + "<br>".join([f"{u['title']} ({u['date']}): <a href='{u['link']}'>{u['link']}</a>" for u in kaggle_updates]) + "<br><br>"
     body += "</body></html>"
     return body
@@ -137,9 +151,10 @@ def send_email(subject, body, to_email):
         server.sendmail(from_email, to_email, text)
         server.quit()
         logging.info('Email sent successfully.')
+        return True
     except Exception as e:
         logging.error(f'Failed to send email: {e}')
-
+        return False
 
 # Main function
 def lambda_handler(event, context):
@@ -187,7 +202,6 @@ def lambda_handler(event, context):
         '"biometrics" AND "video game"'
     ]
 
-
     kaggle_queries = [
         'Video Game',
         'player',
@@ -207,9 +221,10 @@ def lambda_handler(event, context):
 
     if any(google_updates.values()) or kaggle_updates:
         body = compose_email_body(google_updates, kaggle_updates)
-        send_email("Daily Data Science Updates", body, os.getenv('EMAIL_ADDRESS'))
-        all_google_updates = [article for articles in google_updates.values() for article in articles]
-        save_sent_articles(all_google_updates)
+        email_sent = send_email("Daily Data Science Updates", body, os.getenv('EMAIL_ADDRESS'))
+        if email_sent:
+            all_google_updates = [article for articles in google_updates.values() for article in articles]
+            save_sent_articles(all_google_updates)
     else:
         logging.info('No updates to send today.')
 
