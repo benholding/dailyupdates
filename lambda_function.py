@@ -26,7 +26,7 @@ def fetch_google_scholar_updates(queries, days_ago=7):
     sent_articles = load_sent_articles()
 
     for query in queries:
-        url = f"https://scholar.google.com/scholar?hl=en&as_sdt=0,5&q={query.replace(' ', '+')}&scisbd=1"
+        url = f"http://scholar.google.com/scholar?hl=en&as_sdt=0,5&q={query.replace(' ', '+')}&scisbd=1"
         logging.info(f"Fetching URL: {url}")
         try:
             response = requests.get(url)
