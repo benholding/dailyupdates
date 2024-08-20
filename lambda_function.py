@@ -221,7 +221,7 @@ def lambda_handler(event, context):
 
     if any(google_updates.values()) or kaggle_updates:
         body = compose_email_body(google_updates, kaggle_updates)
-        email_sent = send_email("Daily Data Science Updates", body, os.getenv('EMAIL_ADDRESS'))
+        email_sent = send_email("Daily Data Science Updates", body, os.getenv('SEND_TO_EMAIL'))
         if email_sent:
             all_google_updates = [article for articles in google_updates.values() for article in articles]
             save_sent_articles(all_google_updates)
