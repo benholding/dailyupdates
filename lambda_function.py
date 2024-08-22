@@ -119,17 +119,37 @@ def fetch_kaggle_updates(queries):
     return updates
 
 def compose_email_body(google_updates, kaggle_updates):
-    body = "<html><body>"
+    body = """
+    <html>
+    <body style="font-family: Arial, sans-serif;">
+        <h2>Google Scholar Updates</h2>
+    """
+
     for query, articles in google_updates.items():
         if articles:
-            body += f"<b>Google Scholar Updates for '{query}':</b><br>"
+            # Create the URL for the Google Scholar query
+            query_url = f"http://scholar.google.com/scholar?hl=en&as_sdt=0,5&q={query.replace(' ', '+')}&scisbd=1"
+            # Add the heading with a link to the Google Scholar query
+            body += f"<h3><a href='{query_url}'>{query}</a></h3>"
+            body += "<ul>"
             for u in articles:
-                full_paper_info = f" [Full paper available here]({u['full_paper_link']})" if u['full_paper_link'] else ""
-                body += f"{u['title']} ({u['date']}): <a href='{u['link']}'>{u['link']}</a>{full_paper_info}<br>"
-            body += "<br>"
-    
-    body += "<b>Kaggle Updates:</b><br>" + "<br>".join([f"{u['title']} ({u['date']}): <a href='{u['link']}'>{u['link']}</a>" for u in kaggle_updates]) + "<br><br>"
-    body += "</body></html>"
+                body += f"<li><a href='{u['link']}'>{u['title']}</a> ({u['date']})</li>"
+            body += "</ul>"
+
+    if kaggle_updates:
+        body += """
+        <h2>Kaggle Updates</h2>
+        <ul>
+        """
+        for u in kaggle_updates:
+            body += f"<li><a href='{u['link']}'>{u['title']}</a> ({u['date']})</li>"
+        body += "</ul>"
+
+    body += """
+    </body>
+    </html>
+    """
+
     return body
 
 def send_email(subject, body, to_email):
